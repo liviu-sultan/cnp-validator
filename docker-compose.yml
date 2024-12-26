@@ -1,0 +1,51 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    container_name: symfony-app
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+    environment:
+      DATABASE_URL: "mysql://symfony_user:pass@db:3306/symfony-db"
+    depends_on:
+      - db
+    networks:
+      - symfony_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+    networks:
+      - symfony_network
+
+  db:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: symfony-db
+      MYSQL_USER: symfony_user
+      MYSQL_PASSWORD: pass
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - symfony_network
+    ports:
+      - "3306:3306"
+
+# Define the network
+networks:
+  symfony_network:
+    driver: bridge
+
+volumes:
+  db_data:

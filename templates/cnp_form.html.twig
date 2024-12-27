@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNP Validator</title>
+</head>
+<body>
+<h1>CNP Validator</h1>
+<form id="cnpForm">
+    <label for="cnp">Enter CNP:</label>
+    <input type="text" id="cnp" name="cnp" required>
+    <button type="submit">Validate</button>
+</form>
+<div id="response"></div>
+
+<script>
+    document.getElementById('cnpForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const cnp = document.getElementById('cnp').value;
+
+        const response = await fetch('/validate-cnp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cnp }),
+        });
+
+        const result = await response.json();
+        const responseElement = document.getElementById('response');
+        responseElement.innerText = result.error || result.message;
+
+        if (result.error) {
+            responseElement.style.color = 'red';
+        } else {
+            responseElement.style.color = 'green';
+        }
+    });
+</script>
+</body>
+</html>

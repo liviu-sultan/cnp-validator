@@ -25,9 +25,11 @@ class CnpController
         $cnp = $data['cnp'] ?? '';
 
         try {
-            $this->cnpValidatorService->validate($cnp);
+            $isCnpValid = $this->cnpValidatorService->isCnpValid($cnp);
 
-            return new JsonResponse(['message' => 'The provided CNP is valid'], Response::HTTP_OK);
+            return $isCnpValid ?
+                new JsonResponse(['message' => 'The provided CNP is valid'], Response::HTTP_OK) :
+                new JsonResponse(['message' => 'The provided CNP is valid'], Response::HTTP_BAD_REQUEST);
         } catch (CnpValidationException $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }

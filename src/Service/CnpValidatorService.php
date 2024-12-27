@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\District;
+use App\Entity\GenderMap;
 use App\Exception\CnpValidationException;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -18,13 +19,17 @@ class CnpValidatorService
     /**
      * @throws CnpValidationException
      */
-    public function validate(string $cnp): void
+    public function isCnpValid(string $cnp): bool
     {
         if (!$this->isValidFormat($cnp)) {
             throw new CnpValidationException('CNP must be 13 numeric characters.');
         }
 
         $arrCnp = $this->cnpToArray($cnp);
+
+        if (!$this->hasValidGenderId($arrCnp)) {
+            throw new CnpValidationException('CNP has invalid gender id.');
+        }
 
         if (!$this->hasValidDistrictId($arrCnp)) {
             throw new CnpValidationException('CNP has an invalid District ID.');
@@ -38,6 +43,7 @@ class CnpValidatorService
             throw new CnpValidationException('Invalid CNP control digit.');
         }
 
+        return true;
     }
 
     private function isValidFormat(string $cnp): bool
@@ -67,9 +73,9 @@ class CnpValidatorService
         return array_map('intval', $charArr);
     }
 
-    private function hasValidDistrictId(array $arrCnp): bool
+    private function hasValidDistrictId(array $cnp): bool
     {
-        $cnpDistrictId = $arrCnp[7] * 10 + $arrCnp[8];
+        $cnpDistrictId = $cnp[7] * 10 + $cnp[8];
         $districtEntity = $this->entityManager->getRepository(District::class)->findOneBy(['code' => $cnpDistrictId]);
 
         return (bool)$districtEntity;
@@ -80,5 +86,12 @@ class CnpValidatorService
         $birthNumber = $arrCnp[9] * 100 + $arrCnp[10] * 10 + $arrCnp[11];
 
         return  (1 <= $birthNumber) && ($birthNumber <= 999);
+    }
+
+    private function hasValidGenderId($cnp): bool
+    {
+        $genderMapEntity = $this->entityManager->getRepository(GenderMap::class)->findOneBy(['genderId' => $cnp[0]]);
+
+        return (bool)$genderMapEntity;
     }
 }

@@ -14,7 +14,7 @@ final class Version20241226003952 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'populate district table with district data';
     }
 
     public function up(Schema $schema): void
@@ -74,5 +74,6 @@ final class Version20241226003952 extends AbstractMigration
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
+        $this->addSql('TRUNCATE `district`');
     }
 }

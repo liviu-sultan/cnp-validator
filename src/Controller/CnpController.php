@@ -3,19 +3,18 @@
 namespace App\Controller;
 
 use App\Exception\CnpValidationException;
-use App\Service\CnpValidatorService;
+use App\Service\ValidationManager;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class CnpController
 {
-    private CnpValidatorService $cnpValidatorService;
+    private ValidationManager $validationManager;
 
-    public function __construct(CnpValidatorService $cnpValidatorService)
+    public function __construct(ValidationManager $validationManager)
     {
-        $this->cnpValidatorService = $cnpValidatorService;
+        $this->validationManager = $validationManager;
     }
 
     #[Route('/validate-cnp', methods: ['POST'])]
@@ -25,13 +24,10 @@ class CnpController
         $cnp = $data['cnp'] ?? '';
 
         try {
-            $isCnpValid = $this->cnpValidatorService->isCnpValid($cnp);
-
-            return $isCnpValid ?
-                new JsonResponse(['message' => 'The provided CNP is valid'], Response::HTTP_OK) :
-                new JsonResponse(['message' => 'The provided CNP is valid'], Response::HTTP_BAD_REQUEST);
+            $this->validationManager->isCnpValid($cnp);
+            return new JsonResponse(['message' => 'CNP is valid.']);
         } catch (CnpValidationException $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['error' => $e->getMessage()], 400);
         }
     }
 }

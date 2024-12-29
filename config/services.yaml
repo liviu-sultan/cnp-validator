@@ -1,8 +1,3 @@
-# This file is the entry point to configure your own services.
-# Files in the packages/ subdirectory configure your dependencies.
-
-# Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
 
 services:
@@ -15,14 +10,52 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
-        exclude:
-            - '../src/DependencyInjection/'
-            - '../src/Entity/'
-            - '../src/Kernel.php'
+        exclude: '../src/{DependencyInjection,Entity,Tests,Kernel.php}'
+
+    # Explicit configuration for controllers
     App\Controller\:
         resource: '../src/Controller'
         tags: [ 'controller.service_arguments' ]
         public: true
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    # Validator Services
+    App\Validator\FormatValidator:
+        tags:
+            - { name: app.validator, priority: 100 }
+    App\Validator\GenderValidator:
+        tags:
+            - { name: app.validator, priority: 90 }
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+    App\Validator\BirthdateValidator:
+        tags:
+            - { name: app.validator, priority: 80 }
+    App\Validator\DistrictValidator:
+        tags:
+            - { name: app.validator, priority: 70 }
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+    App\Validator\UniqueBirthNumberValidator:
+        tags:
+            - { name: app.validator, priority: 60 }
+    App\Validator\ControlDigitValidator:
+        tags:
+            - { name: app.validator, priority: 50 }
+
+    # ValidationManager Service
+    App\Service\ValidationManager:
+        arguments:
+            $validators: !tagged_iterator app.cnp_validator
+        calls:
+            - method: 'addValidator'
+              arguments: [ '@App\Validator\FormatValidator' ]
+            - method: 'addValidator'
+              arguments: [ '@App\Validator\BirthdateValidator' ]
+            - method: 'addValidator'
+              arguments: [ '@App\Validator\GenderValidator' ]
+            - method: 'addValidator'
+              arguments: [ '@App\Validator\DistrictValidator' ]
+            - method: 'addValidator'
+              arguments: [ '@App\Validator\UniqueBirthNumberValidator' ]
+            - method: 'addValidator'
+              arguments: [ '@App\Validator\ControlDigitValidator' ]
